@@ -2,9 +2,10 @@ import json
 import os
 import sys
 import time
+from subprocess import check_output, run
+
 import yaml
 from jinja2 import Template
-from subprocess import check_output, run
 
 
 def read_config(config_file):
@@ -23,6 +24,7 @@ def check_env_variables():
 # get_stolon_servers accepts a JSON from stolonctl utility and returns list of servers available to connect
 def get_stolon_servers(stolon_json, fallback_to_master=False):
     server_list = []
+    master_address = None
 
     # Adding support for newer version stolon clusterdata format
     if 'DBs' in stolon_json:
@@ -36,12 +38,11 @@ def get_stolon_servers(stolon_json, fallback_to_master=False):
         if 'healthy' in database['status'] and 'listenAddress' in database['status']:
             if database['status']['healthy']:
                 if database['spec']['role'] == 'standby':
-                    server_list.append(
-                        database['status']['listenAddress'] + ':' + database['status']['port'])
+                    server_list.append(database['status']['listenAddress'] + ':' + database['status']['port'])
                 else:
                     master_address = database['status']['listenAddress'] + ':' + database['status']['port']
 
-    if server_list == [] and fallback_to_master:
+    if server_list == [] and fallback_to_master and master_address:
         server_list.append(master_address)
 
     return server_list
@@ -62,8 +63,9 @@ if __name__ == '__main__':
     template = Template(haproxy_template.read())
     haproxy_template.close()
 
-    while True:
+    time.sleep(3)  # await while haproxy started
 
+    while True:
         output = check_output("stolonctl clusterdata read", shell=True)
 
         try:
