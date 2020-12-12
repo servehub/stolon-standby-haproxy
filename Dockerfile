@@ -19,7 +19,7 @@ RUN apt-get update && \
 COPY requirements.txt /app/requirements.txt
 RUN pip3 install --no-cache-dir -r /app/requirements.txt
 
-ENV STOLON_VERSION="0.14.0"
+ENV STOLON_VERSION="0.16.0"
 
 RUN curl -Lfs https://github.com/sorintlab/stolon/releases/download/v${STOLON_VERSION}/stolon-v${STOLON_VERSION}-linux-amd64.tar.gz \
       -o /tmp/stolon.tar.gz \
